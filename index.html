@@ -2,22 +2,20 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<title>Carta 💜</title>
+<title>Para você 💜</title>
 <style>
-  /* Formato 9:16 */
   body {
     margin: 0;
     height: 100vh;
     width: 100vw;
     display: flex;
     justify-content: center;
-    align-items: flex-end; /* carta vai subir de baixo */
+    align-items: center;
     font-family: Arial, sans-serif;
     overflow: hidden;
     background: linear-gradient(135deg, #2a003f, #5a0f7a, #8e44ad);
   }
 
-  /* Carta */
   .envelope {
     width: 320px;
     max-width: 90%;
@@ -26,12 +24,16 @@
     position: relative;
     border-radius: 15px;
     perspective: 1000px;
-    transform: translateY(100%); /* começa abaixo da tela */
+    cursor: pointer;
+    display: flex;
+    justify-content: center;
+    align-items: flex-end;
+    transform: translateY(50vh);
     transition: transform 3s ease;
   }
 
   .envelope.open {
-    transform: translateY(0); /* sobe para o centro */
+    transform: translateY(0);
   }
 
   .base {
@@ -41,6 +43,7 @@
     border-radius: 15px;
     position: absolute;
     box-shadow: 0 10px 40px rgba(0,0,0,0.4);
+    z-index: 1;
   }
 
   .flap {
@@ -52,15 +55,16 @@
     left: 0;
     transform-origin: top;
     border-radius: 15px;
+    transform: rotateX(0deg);
     transition: transform 2s ease;
     backface-visibility: hidden;
+    z-index: 2;
   }
 
-  .envelope.open .flap {
+  .flap.open {
     transform: rotateX(180deg);
   }
 
-  /* Conteúdo carta */
   .letter {
     position: absolute;
     width: 90%;
@@ -75,28 +79,45 @@
     text-align: center;
     transform: translateY(100%);
     opacity: 0;
-    transition: transform 2s ease, opacity 2s ease;
+    transition: transform 2s ease 1s, opacity 2s ease 1s;
+    z-index: 3;
   }
 
-  .envelope.open .letter {
+  .letter.show {
     transform: translateY(0);
     opacity: 1;
   }
 
   .letter h2 { color: #e0b3ff; }
 
-  /* Partículas */
+  .letter img {
+    width: 45%;
+    margin: 5px;
+    border-radius: 10px;
+  }
+
+  .heart {
+    position: absolute;
+    bottom: -40px;
+    font-size: 40px;
+    color: #ff4d94;
+    cursor: pointer;
+    animation: pulse 1s infinite alternate;
+    z-index: 4;
+  }
+
+  @keyframes pulse {
+    from { transform: scale(1); }
+    to { transform: scale(1.2); }
+  }
+
   .particle {
     position: fixed;
     pointer-events: none;
-    animation: float linear infinite;
     white-space: nowrap;
     user-select: none;
-  }
-
-  @keyframes float {
-    from { transform: translateY(100vh); opacity: 1; }
-    to { transform: translateY(-10vh); opacity: 0; }
+    opacity: 0.8;
+    transform: translateY(0) rotate(0deg);
   }
 </style>
 </head>
@@ -104,28 +125,37 @@
 
 <div class="envelope" id="envelope">
   <div class="base"></div>
-  <div class="flap"></div>
-  <div class="letter">
+  <div class="flap" id="flap"></div>
+
+  <div class="letter" id="letter">
     <h2>Pra você 💜</h2>
+    <div style="display:flex; justify-content: space-between;">
+      <img src="foto1.jpg" alt="foto1">
+      <img src="foto2.jpg" alt="foto2">
+    </div>
     <p>
       Desde que você chegou,<br>
       tudo ficou mais bonito ✨<br><br>
       Eu te amo muito ❤️<br>
-      Fiz com carinho 💖
+      Fiz com carinho 💖<br>
+      Volta vida 😭
     </p>
   </div>
+
+  <div class="heart" id="heart">❤️</div>
 </div>
 
-<!-- Música -->
 <audio id="musica" loop>
   <source src="musica.mp3" type="audio/mpeg">
 </audio>
 
 <script>
 const envelope = document.getElementById("envelope");
+const letter = document.getElementById("letter");
+const flap = document.getElementById("flap");
+const heart = document.getElementById("heart");
 const musica = document.getElementById("musica");
 
-// Partículas
 const elementos = [
   "💜","💖","💘","💞","✨","⭐","🌟","💎","🐾","😭",
   "eu te amo muito 💖","fiz com carinho 💜","volta vida 😭"
@@ -136,26 +166,48 @@ function criarParticula() {
   p.classList.add("particle");
   p.innerText = elementos[Math.floor(Math.random() * elementos.length)];
 
-  const tamanho = Math.random() * 20 + 10;
+  const tamanho = Math.random() * 25 + 10;
   p.style.fontSize = tamanho + "px";
   p.style.left = Math.random() * 100 + "vw";
-  p.style.animationDuration = (4 + Math.random() * 5) + "s";
-  p.style.opacity = Math.random();
-
+  p.style.opacity = 0.8 + Math.random() * 0.2;
+  p.style.transition = `transform 5s linear, opacity 5s linear`;
+  
   document.body.appendChild(p);
 
-  setTimeout(() => { p.remove(); }, 9000);
+  // Velocidade e ângulo aleatórios
+  const duracao = 5000 + Math.random() * 4000;
+  const destinoX = (Math.random() - 0.5) * 200; // deslocamento horizontal
+  const destinoY = -window.innerHeight - Math.random() * 200; // sobe para cima
+  const rotacao = Math.random() * 720;
+
+  setTimeout(() => {
+    p.style.transform = `translate(${destinoX}px, ${destinoY}px) rotate(${rotacao}deg)`;
+    p.style.opacity = 0;
+  }, 50);
+
+  setTimeout(() => p.remove(), duracao);
 }
 
-setInterval(criarParticula, 180);
-
-// Animação carta + música
-window.onload = () => {
-  setTimeout(() => {
+function abrirCarta() {
+  if (!envelope.classList.contains("open")) {
     envelope.classList.add("open");
+    flap.classList.add("open");
+    musica.volume = 0.3;
+    musica.currentTime = 0;
     musica.play().catch(() => {});
-  }, 500); // carta começa a abrir meio segundo depois
-};
+
+    // Carta sobe após flap abrir
+    setTimeout(() => {
+      letter.classList.add("show");
+
+      // Partículas aparecem gradualmente
+      setInterval(criarParticula, 150); // mais naturais
+    }, 1000);
+  }
+}
+
+envelope.addEventListener("click", abrirCarta);
+heart.addEventListener("click", abrirCarta);
 </script>
 
 </body>
