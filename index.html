@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<title>Para você 💜</title>
+<title>Para Alanna 💜</title>
 <style>
   body {
     margin: 0;
@@ -19,8 +19,8 @@
   .envelope {
     width: 320px;
     max-width: 90%;
-    height: 400px;
-    max-height: 70%;
+    height: 450px;
+    max-height: 80%;
     position: relative;
     border-radius: 15px;
     perspective: 1000px;
@@ -65,22 +65,32 @@
     transform: rotateX(180deg);
   }
 
-  .letter {
+  .letter-container {
     position: absolute;
-    width: 90%;
-    height: 90%;
-    top: 5%;
-    left: 5%;
+    width: 95%;
+    height: 95%;
+    top: 2.5%;
+    left: 2.5%;
     border-radius: 15px;
     backdrop-filter: blur(12px);
     background: rgba(0,0,0,0.6);
-    color: white;
+    overflow: hidden;
+    z-index: 3;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .letter {
+    flex: 1;
     padding: 20px;
-    text-align: center;
+    color: white;
+    text-align: left;
+    overflow-y: scroll;
+    -webkit-overflow-scrolling: touch;
+    scroll-behavior: smooth;
     transform: translateY(100%);
     opacity: 0;
     transition: transform 2s ease 1s, opacity 2s ease 1s;
-    z-index: 3;
   }
 
   .letter.show {
@@ -88,12 +98,39 @@
     opacity: 1;
   }
 
-  .letter h2 { color: #e0b3ff; }
+  .letter p, .letter h2, .letter img {
+    opacity: 0;
+    transform: translateY(20px);
+    transition: opacity 1s ease, transform 1s ease;
+  }
+
+  .letter p.visible, .letter h2.visible, .letter img.visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
 
   .letter img {
     width: 45%;
     margin: 5px;
     border-radius: 10px;
+  }
+
+  .scroll-indicator {
+    position: absolute;
+    top: 0;
+    right: 5px;
+    width: 5px;
+    height: 100%;
+    background: rgba(255,255,255,0.2);
+    border-radius: 2px;
+  }
+
+  .scroll-indicator-bar {
+    width: 100%;
+    height: 0%;
+    background: #ff4d94;
+    border-radius: 2px;
+    transition: height 0.1s linear;
   }
 
   .heart {
@@ -127,19 +164,41 @@
   <div class="base"></div>
   <div class="flap" id="flap"></div>
 
-  <div class="letter" id="letter">
-    <h2>Pra você 💜</h2>
-    <div style="display:flex; justify-content: space-between;">
-      <img src="foto1.jpg" alt="foto1">
-      <img src="foto2.jpg" alt="foto2">
+  <div class="letter-container">
+    <div class="letter" id="letter">
+      <h2>Oi Alanna ou Amora 💜</h2>
+      <p>
+        Não sei como você gostaria de ser chamada nessa carta, desculpa se estou sendo muito chato nesses últimos dias, vou entender se depois dessa carta você quiser parar de falar comigo.
+      </p>
+      <p>
+        Fiz essa carta tem uns dias, estava fazendo ela de pouco em pouco, escrevendo por dia. Me inspirei na que você fez, que você foi escrevendo conforme os dias.
+      </p>
+      <p>
+        Eu sinto muita saudade de como a gente era antes, sei que talvez não volte. Não se sinta odiada por minha parte depois do término. Eu não tenho raiva alguma de você e sinto muito por fazer você estar passando por esse momento difícil.  
+        Sinto muito por ter feito você se apaixonar por mim e logo em seguida ter ido embora.  
+        Mas o sentimento que eu sinto por você foi o mais puro que eu já senti na vida.  
+      </p>
+      <p>
+        Eu ficava feliz de ter alguém ao meu lado em quem podia confiar, rir, contar piadas sem graça ou até mesmo falar sobre coisas do dia a dia.  
+        Nos meus planos era para estar te entregando uma carta parecida com essa dentro de um buquê de rosas, mas não deu tempo. Acho que cheguei a falar isso com você em algum momento.  
+      </p>
+      <p>
+        Eu só queria que você soubesse que eu te amo muito, muito mesmo, do fundo do meu coração.  
+        Embora a gente não esteja mais juntos, eu queria poder te ver uma última vez. Te entendo se quiser recusar esse pedido.  
+        Se você quiser me bloquear por ficar te mandando mensagem o dia todo, tudo bem.  
+      </p>
+      <p>
+        Com muito carinho: <br>
+        Seu ex Enzo 💜
+      </p>
+      <div style="display:flex; justify-content: space-between;">
+        <img src="foto1.jpg" alt="foto1">
+        <img src="foto2.jpg" alt="foto2">
+      </div>
     </div>
-    <p>
-      Desde que você chegou,<br>
-      tudo ficou mais bonito ✨<br><br>
-      Eu te amo muito ❤️<br>
-      Fiz com carinho 💖<br>
-      Volta vida 😭
-    </p>
+    <div class="scroll-indicator">
+      <div class="scroll-indicator-bar" id="scrollBar"></div>
+    </div>
   </div>
 
   <div class="heart" id="heart">❤️</div>
@@ -155,6 +214,7 @@ const letter = document.getElementById("letter");
 const flap = document.getElementById("flap");
 const heart = document.getElementById("heart");
 const musica = document.getElementById("musica");
+const scrollBar = document.getElementById("scrollBar");
 
 const elementos = [
   "💜","💖","💘","💞","✨","⭐","🌟","💎","🐾","😭",
@@ -174,10 +234,9 @@ function criarParticula() {
   
   document.body.appendChild(p);
 
-  // Velocidade e ângulo aleatórios
   const duracao = 5000 + Math.random() * 4000;
-  const destinoX = (Math.random() - 0.5) * 200; // deslocamento horizontal
-  const destinoY = -window.innerHeight - Math.random() * 200; // sobe para cima
+  const destinoX = (Math.random() - 0.5) * 200;
+  const destinoY = -window.innerHeight - Math.random() * 200;
   const rotacao = Math.random() * 720;
 
   setTimeout(() => {
@@ -196,18 +255,37 @@ function abrirCarta() {
     musica.currentTime = 0;
     musica.play().catch(() => {});
 
-    // Carta sobe após flap abrir
     setTimeout(() => {
       letter.classList.add("show");
-
-      // Partículas aparecem gradualmente
-      setInterval(criarParticula, 150); // mais naturais
+      setInterval(criarParticula, 150);
+      atualizarVisibilidade(); // faz os parágrafos aparecerem com fade-in
     }, 1000);
   }
 }
 
 envelope.addEventListener("click", abrirCarta);
 heart.addEventListener("click", abrirCarta);
+
+/* Atualiza a barra de scroll */
+letter.addEventListener("scroll", () => {
+  const alturaTotal = letter.scrollHeight - letter.clientHeight;
+  const alturaScroll = letter.scrollTop;
+  const porcentagem = (alturaScroll / alturaTotal) * 100;
+  scrollBar.style.height = porcentagem + "%";
+  atualizarVisibilidade();
+});
+
+/* Função para fade-in de cada parágrafo/imagem conforme rola */
+function atualizarVisibilidade() {
+  const elementosLetter = letter.querySelectorAll("p, h2, img");
+  const limite = letter.scrollTop + letter.clientHeight - 20;
+  elementosLetter.forEach(el => {
+    const top = el.offsetTop;
+    if (top < limite) {
+      el.classList.add("visible");
+    }
+  });
+}
 </script>
 
 </body>
